@@ -1662,6 +1662,44 @@ button:hover {
 }
 </style>
 
+
+<style id="display-position-final">
+/* 不要な状態表示・メッセージを完全に非表示 */
+#status,
+#message {
+    display: none !important;
+}
+
+/* C：ヘッダーとの重なりを避けるため、手札をそのまま下へ */
+.player-c {
+    top: 38px !important;
+}
+
+/* A：手札と「A（あなた）」を画面下端から上へ */
+.player-a {
+    bottom: 52px !important;
+}
+
+/* スマホではさらに余裕を取る */
+@media (max-width: 600px) {
+    .player-c {
+        top: 34px !important;
+    }
+
+    .player-a {
+        bottom: 170px !important;
+    }
+
+    .player-c .player-name {
+        top: -12px !important;
+    }
+
+    .player-a .player-name {
+        bottom: -14px !important;
+    }
+}
+</style>
+
 </head>
 
 
