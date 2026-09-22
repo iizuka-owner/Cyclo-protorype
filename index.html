@@ -1634,6 +1634,34 @@ button:hover {
 }
 </style>
 
+
+<style id="mobile-layout-final-v4">
+@media (max-width: 600px) {
+  /*
+   * iPhone Safariでは100vhと実際の表示領域の差で、
+   * Aをbottom基準で配置すると手札が画面下へ隠れる。
+   * Aだけ画面内側へ固定する。
+   */
+  .player-a {
+    bottom: 125px !important;
+  }
+
+  .player-a .hand {
+    position: relative !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: 24px !important;
+    min-height: 24px !important;
+  }
+
+  .player-a .score-display {
+    position: relative !important;
+    z-index: 50 !important;
+  }
+}
+</style>
+
 </head>
 
 
