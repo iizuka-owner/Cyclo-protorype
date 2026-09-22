@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>trickTakingGame"Cyclo"testplay</title>
+<title>4人トリックテイキング テストプレイ</title>
 
 <style>
 * {
@@ -1075,15 +1075,15 @@ button:hover {
     .played-card,
     .flying-card,
     .taken-flight {
-        width: 62px;
-        height: 62px;
+        width: 44px;
+        height: 44px;
     }
 
     .card-rank,
     .played-rank,
     .flying-rank,
     .taken-rank {
-        font-size: 26px;
+        font-size: 20px;
     }
 
     .center-table {
@@ -1097,6 +1097,171 @@ button:hover {
 
     .play-zone-d {
         right: 26%;
+    }
+}
+
+@media (max-width: 600px) {
+
+    header {
+        height: 44px;
+        padding: 0 8px;
+    }
+
+    .title {
+        font-size: 12px;
+    }
+
+    .controls {
+        gap: 5px;
+    }
+
+    .controls button {
+        padding: 4px 7px;
+        font-size: 11px;
+    }
+
+    .table {
+        height: calc(100vh - 44px);
+    }
+
+    .center-table {
+        left: 16%;
+        right: 16%;
+        top: 25%;
+        bottom: 25%;
+        border-radius: 12px;
+    }
+
+    .rule-badge {
+        left: calc(16% + 7px);
+        top: calc(25% + 7px);
+        padding: 3px 5px;
+        font-size: 9px;
+    }
+
+    .status {
+        top: 5px;
+        max-width: 94%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 10px;
+    }
+
+    .player-a {
+        bottom: 5px;
+    }
+
+    .player-c {
+        top: 5px;
+    }
+
+    .player-b,
+    .player-d {
+        top: 25%;
+        height: 50%;
+    }
+
+    .hand {
+        gap: 1px;
+    }
+
+    .hand:not(.vertical) {
+        max-width: 96vw;
+        overflow: visible;
+    }
+
+    .hand.vertical {
+        gap: 1px;
+    }
+
+    .card,
+    .played-card,
+    .flying-card,
+    .taken-flight {
+        width: 34px;
+        height: 34px;
+        border-radius: 4px;
+    }
+
+    .card-rank,
+    .played-rank,
+    .flying-rank,
+    .taken-rank {
+        font-size: 16px;
+    }
+
+    .card-suit {
+        left: 3px;
+        top: 2px;
+        font-size: 7px;
+    }
+
+    .separator {
+        height: 29px;
+        margin: 0 1px;
+    }
+
+    .vertical .separator {
+        width: 29px;
+        height: 2px;
+        margin: 1px 0;
+    }
+
+    .score-display {
+        min-width: 42px;
+        font-size: 10px;
+    }
+
+    .confirmed-score,
+    .current-round-score {
+        font-size: 10px;
+    }
+
+    .player-a .score-display {
+        transform: translateY(-8px);
+    }
+
+    .player-b .score-display {
+        margin-left: 4px;
+        margin-top: 5px;
+    }
+
+    .player-d .score-display {
+        margin-right: 4px;
+        margin-top: 5px;
+    }
+
+    .player-name {
+        font-size: 10px;
+    }
+
+    .player-a .player-name {
+        bottom: -15px;
+    }
+
+    .player-c .player-name {
+        top: -15px;
+    }
+
+    .player-b .player-name {
+        top: -15px;
+    }
+
+    .player-d .player-name {
+        top: -15px;
+    }
+
+    .play-zone {
+        width: 36px;
+        height: 36px;
+    }
+
+    .play-zone-b {
+        left: 39%;
+    }
+
+    .play-zone-d {
+        right: 39%;
     }
 }
 
@@ -1141,7 +1306,7 @@ button:hover {
     <div class="controls">
 
         <button id="newGame">
-            NewGame
+            新しいゲーム
         </button>
 
 
