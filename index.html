@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cyclo-prototype-TrickTaking</title>
+<title>Cyclo-prototype</title>
 
 <style>
 * {
@@ -1766,13 +1766,13 @@ button:hover {
 <header>
 
     <div class="title">
-        Cyclo-prototype-TrickTaking
+        4人トリックテイキング テストプレイ
     </div>
 
     <div class="controls">
 
         <button id="newGame">
-            新しいゲーム
+            NewGame
         </button>
 
 
@@ -4007,6 +4007,49 @@ function cpuFinalRank4Total(state, player) {
 }
 
 
+
+function cpuImmediateRank4TakeIsSelf(player, candidate) {
+    if (candidate.rank !== 4) {
+        return 0;
+    }
+
+    const trick = game.currentTrick.slice();
+
+    // Provisional trick after this candidate is played.
+    trick.push({
+        player: player,
+        card: candidate
+    });
+
+    if (trick.length === 0) {
+        return 0;
+    }
+
+    const leadSuit = trick[0].card.suit;
+    const eligible = trick.filter(
+        played => played.card.suit === leadSuit
+    );
+
+    let winner = eligible[0].player;
+    let winningRank = eligible[0].card.rank;
+
+    for (let i = 1; i < eligible.length; i++) {
+        if (eligible[i].card.rank > winningRank) {
+            winningRank = eligible[i].card.rank;
+            winner = eligible[i].player;
+        }
+    }
+
+    const collector =
+        takePlayerForWinner(
+            winner,
+            game.trickType
+        );
+
+    return collector === player ? 1 : 0;
+}
+
+
 function chooseCPUCard(player) {
 
     const legal =
@@ -4056,6 +4099,16 @@ function chooseCPUCard(player) {
         let ownRank4Total = 0;
         let otherRank4Total = 0;
         let totalRuns = 0;
+
+        // Rank 4 は低優先度のまま。
+        // 主要4指標が同程度の候補だけで比較する弱いタイブレーク。
+        const weakRank4Safety =
+            candidate.rank === 4
+                ? cpuImmediateRank4TakeIsSelf(
+                      player,
+                      candidate
+                  )
+                : 1;
 
         for (const world of worlds) {
 
@@ -4141,7 +4194,8 @@ function chooseCPUCard(player) {
             exactOwn2 / totalRuns,
             leftNot2 / totalRuns,
             ownRank4Total / totalRuns,
-            -otherRank4Total / totalRuns
+            -otherRank4Total / totalRuns,
+            weakRank4Safety
         ];
 
         if (
