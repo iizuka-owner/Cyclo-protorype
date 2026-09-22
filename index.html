@@ -1,0 +1,4750 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4人トリックテイキング テストプレイ</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    overflow: hidden;
+    background: #171717;
+    color: #eee;
+    font-family:
+        "Noto Sans JP",
+        "Yu Gothic",
+        Meiryo,
+        sans-serif;
+}
+
+/* =========================================================
+   ヘッダー
+========================================================= */
+
+header {
+    position: relative;
+    z-index: 500;
+
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 14px;
+
+    background: #202020;
+    border-bottom: 1px solid #383838;
+}
+
+.title {
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+button {
+    border: 1px solid #666;
+    border-radius: 4px;
+
+    background: #303030;
+    color: #eee;
+
+    padding: 5px 10px;
+
+    cursor: pointer;
+}
+
+button:hover {
+    background: #444;
+}
+
+/* =========================================================
+   ルール説明
+========================================================= */
+
+#ruleHelp {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.rule-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(0,0,0,0.72);
+}
+
+.rule-modal.visible {
+    display: flex;
+}
+
+.rule-dialog {
+    position: relative;
+    width: min(720px, 100%);
+    max-height: min(86vh, 820px);
+    overflow: hidden;
+    border: 1px solid #555;
+    border-radius: 8px;
+    background: #202020;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.55);
+}
+
+.rule-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid #383838;
+}
+
+.rule-dialog-title {
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.rule-close {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 20px;
+    line-height: 1;
+}
+
+.rule-language {
+    display: flex;
+    gap: 6px;
+    padding: 10px 16px 0;
+}
+
+.rule-language button {
+    padding: 4px 9px;
+    font-size: 11px;
+}
+
+.rule-language button.active {
+    background: #555;
+    border-color: #888;
+}
+
+.rule-content {
+    padding: 12px 20px 20px;
+    overflow-y: auto;
+    max-height: calc(min(86vh, 820px) - 100px);
+    font-size: 13px;
+    line-height: 1.65;
+}
+
+.rule-content h3 {
+    margin: 14px 0 6px;
+    font-size: 14px;
+}
+
+.rule-content h3:first-child {
+    margin-top: 0;
+}
+
+.rule-content p {
+    margin: 6px 0;
+}
+
+.rule-content ul {
+    margin: 6px 0 10px;
+    padding-left: 20px;
+}
+
+.rule-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+}
+
+.rule-content th,
+.rule-content td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #383838;
+    text-align: left;
+}
+
+.rule-content th:last-child,
+.rule-content td:last-child {
+    text-align: right;
+}
+
+
+/* =========================================================
+   テーブル
+========================================================= */
+
+.table {
+    position: relative;
+
+    width: 100%;
+    height: calc(100vh - 48px);
+
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            #252525 0%,
+            #1b1b1b 62%,
+            #151515 100%
+        );
+}
+
+/* =========================================================
+   コンパクトな卓
+========================================================= */
+
+.center-table {
+    position: absolute;
+
+    left: 31%;
+    right: 31%;
+
+    top: 27%;
+    bottom: 27%;
+
+    border-radius: 16px;
+
+    background: #202020;
+
+    border: 1px solid #353535;
+}
+
+/* =========================================================
+   現在のトリック方式
+========================================================= */
+
+.rule-badge {
+    position: absolute;
+
+    left: calc(31% + 12px);
+    top: calc(27% + 12px);
+
+    z-index: 100;
+
+    padding: 5px 9px;
+
+    border-radius: 4px;
+
+    background: rgba(0,0,0,0.72);
+    border: 1px solid #555;
+
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    color: #ddd;
+
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* =========================================================
+   トリック情報
+========================================================= */
+
+.status {
+    position: absolute;
+
+    left: 50%;
+    top: 8px;
+
+    transform: translateX(-50%);
+
+    z-index: 100;
+
+    font-size: 12px;
+    color: #aaa;
+
+    white-space: nowrap;
+}
+
+/* =========================================================
+   プレイヤー共通
+========================================================= */
+
+.player {
+    position: absolute;
+
+    z-index: 30;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+}
+
+/* =========================================================
+   A
+========================================================= */
+
+.player-a {
+    left: 50%;
+    bottom: 12px;
+
+    transform: translateX(-50%);
+
+    flex-direction: column;
+
+    width: auto;
+}
+
+.player-a .score-display {
+    order: 0;
+    transform: translateY(-12px);
+}
+
+.player-a .hand {
+    order: 1;
+}
+
+/* =========================================================
+   C
+========================================================= */
+
+.player-c {
+    left: 50%;
+    top: 12px;
+
+    transform: translateX(-50%);
+
+    flex-direction: column;
+
+    width: auto;
+}
+
+.player-c .hand {
+    order: 0;
+}
+
+.player-c .score-display {
+    order: 1;
+}
+
+/* =========================================================
+   B
+========================================================= */
+
+.player-b {
+    left: 7%;
+    top: 27%;
+
+    height: 46%;
+
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.player-b .hand {
+    order: 0;
+}
+
+.player-b .score-display {
+    order: 1;
+
+    margin-left: 8px;
+    margin-top: 12px;
+}
+
+/* =========================================================
+   D
+========================================================= */
+
+.player-d {
+    right: 7%;
+    top: 27%;
+
+    height: 46%;
+
+    flex-direction: row-reverse;
+    align-items: flex-start;
+}
+
+.player-d .hand {
+    order: 0;
+}
+
+.player-d .score-display {
+    order: 1;
+
+    margin-right: 8px;
+    margin-top: 12px;
+}
+
+/* =========================================================
+   プレイヤー名
+========================================================= */
+
+.player-name {
+    position: absolute;
+
+    font-size: 12px;
+    font-weight: bold;
+
+    color: #aaa;
+}
+
+.player-a .player-name {
+    bottom: -19px;
+}
+
+.player-c .player-name {
+    top: -19px;
+}
+
+.player-b .player-name {
+    left: 0;
+    top: -20px;
+}
+
+.player-d .player-name {
+    right: 0;
+    top: -20px;
+}
+
+/* =========================================================
+   スコア表示
+========================================================= */
+
+.score-display {
+    z-index: 40;
+
+    font-size: 13px;
+    font-weight: bold;
+
+    color: #ddd;
+
+    white-space: nowrap;
+
+    min-width: 55px;
+
+    text-align: center;
+}
+
+.confirmed-score,
+.current-round-score {
+    font-size: 13px;
+    color: #ddd;
+}
+
+.current-round-score {
+    margin-top: 2px;
+}
+
+/* =========================================================
+   手札
+========================================================= */
+
+.hand {
+    display: flex;
+
+    align-items: center;
+
+    gap: 4px;
+
+    flex-wrap: nowrap;
+}
+
+.hand.vertical {
+    flex-direction: column;
+}
+
+/* =========================================================
+   カード
+========================================================= */
+
+.card {
+    position: relative;
+
+    flex: 0 0 auto;
+
+    width: 54px;
+    height: 54px;
+
+    border-radius: 5px;
+
+    border: 2px solid rgba(255,255,255,0.65);
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    user-select: none;
+
+    font-weight: bold;
+
+    transition:
+        transform 0.15s ease,
+        opacity 0.15s ease,
+        filter 0.15s ease;
+
+    box-shadow:
+        0 2px 5px rgba(0,0,0,0.35);
+}
+
+/* =========================================================
+   カード色
+========================================================= */
+
+.card.red {
+    background: #d73535;
+}
+
+.card.blue {
+    background: #2877cf;
+}
+
+.card.green {
+    background: #278b4b;
+}
+
+.card.yellow {
+    background: #b49a00;
+    color: #fff;
+}
+
+/* =========================================================
+   カード文字
+========================================================= */
+
+.card-suit {
+    position: absolute;
+
+    left: 4px;
+    top: 3px;
+
+    font-size: 9px;
+
+    opacity: 0.9;
+}
+
+.card-rank {
+    font-size: 23px;
+}
+
+.card.rank4 .card-rank {
+    color: #000;
+}
+
+/* =========================================================
+   非公開カード
+========================================================= */
+
+.card.hidden .card-rank {
+    visibility: hidden;
+}
+
+/* =========================================================
+   公開カード
+========================================================= */
+
+.card.public-card {
+    border-color: rgba(255,255,255,0.95);
+}
+
+/* =========================================================
+   Aの合法手
+========================================================= */
+
+.card.playable {
+    cursor: pointer;
+
+    border: 3px solid #fff;
+
+    transform: translateY(-5px);
+
+    box-shadow:
+        0 7px 14px rgba(0,0,0,0.5);
+}
+
+.card.playable:hover {
+    transform: translateY(-9px);
+}
+
+.card.not-playable {
+    opacity: 0.35;
+}
+
+/* =========================================================
+   公開カード区切り
+========================================================= */
+
+.separator {
+    flex: 0 0 auto;
+
+    width: 2px;
+    height: 46px;
+
+    background: #777;
+
+    margin: 0 2px;
+}
+
+.vertical .separator {
+    width: 46px;
+    height: 2px;
+
+    margin: 2px 0;
+}
+
+/* =========================================================
+   出されたカードの位置
+========================================================= */
+
+.play-zone {
+    position: absolute;
+
+    z-index: 80;
+
+    width: 56px;
+    height: 56px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    pointer-events: none;
+}
+
+/*
+   すべて盤面の内側に置く
+*/
+
+.play-zone-a {
+    left: 50%;
+    bottom: 36%;
+
+    transform: translate(-50%, 50%);
+}
+
+.play-zone-b {
+    left: 42%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+}
+
+.play-zone-c {
+    left: 50%;
+    top: 36%;
+
+    transform: translate(-50%, -50%);
+}
+
+.play-zone-d {
+    right: 42%;
+    top: 50%;
+
+    transform: translate(50%, -50%);
+}
+/* =========================================================
+   出されたカード
+========================================================= */
+
+.played-card {
+    position: absolute;
+
+    width: 54px;
+    height: 54px;
+
+    border-radius: 5px;
+
+    border: 2px solid white;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-weight: bold;
+
+    box-shadow:
+        0 4px 12px rgba(0,0,0,0.55);
+
+    z-index: 10;
+
+    pointer-events: none;
+}
+
+.played-card.red {
+    background: #d73535;
+}
+
+.played-card.blue {
+    background: #2877cf;
+}
+
+.played-card.green {
+    background: #278b4b;
+}
+
+.played-card.yellow {
+    background: #b49a00;
+    color: #fff;
+}
+
+.played-suit {
+    position: absolute;
+
+    left: 4px;
+    top: 3px;
+
+    font-size: 9px;
+}
+
+.played-rank {
+    font-size: 23px;
+}
+
+.played-card.rank4 .played-rank {
+    color: #000;
+}
+
+/* =========================================================
+   手札からプレイ位置への移動用
+========================================================= */
+
+.flying-card {
+    position: fixed;
+
+    width: 54px;
+    height: 54px;
+
+    border-radius: 5px;
+
+    border: 2px solid white;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-weight: bold;
+
+    z-index: 1000;
+
+    pointer-events: none;
+
+    box-shadow:
+        0 8px 20px rgba(0,0,0,0.65);
+
+    transition:
+        left 0.34s cubic-bezier(.2,.8,.2,1),
+        top 0.34s cubic-bezier(.2,.8,.2,1),
+        transform 0.34s ease,
+        opacity 0.34s ease;
+}
+
+.flying-card.red {
+    background: #d73535;
+}
+
+.flying-card.blue {
+    background: #2877cf;
+}
+
+.flying-card.green {
+    background: #278b4b;
+}
+
+.flying-card.yellow {
+    background: #b49a00;
+    color: #fff;
+}
+
+.flying-suit {
+    position: absolute;
+
+    left: 4px;
+    top: 3px;
+
+    font-size: 9px;
+}
+
+.flying-rank {
+    font-size: 23px;
+}
+
+.flying-card.rank4 .flying-rank {
+    color: #000;
+}
+
+/* =========================================================
+   WIN / TAKE
+========================================================= */
+
+.card-label {
+    position: absolute;
+
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    top: -21px;
+
+    padding: 2px 5px;
+
+    border-radius: 3px;
+
+    background: rgba(0,0,0,0.88);
+
+    color: #fff;
+
+    font-size: 10px;
+
+    font-weight: bold;
+
+    white-space: nowrap;
+
+    z-index: 30;
+}
+
+/* =========================================================
+   獲得時に飛ぶカード
+========================================================= */
+
+.taken-flight {
+    position: fixed;
+
+    width: 54px;
+    height: 54px;
+
+    border-radius: 5px;
+
+    border: 2px solid white;
+
+    z-index: 1200;
+
+    pointer-events: none;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-weight: bold;
+
+    transition:
+        left 0.34s cubic-bezier(.75,0,.95,.2),
+        top 0.34s cubic-bezier(.75,0,.95,.2),
+        transform 0.34s cubic-bezier(.75,0,.95,.2),
+        opacity 0.34s ease;
+}
+
+.taken-flight.red {
+    background: #d73535;
+}
+
+.taken-flight.blue {
+    background: #2877cf;
+}
+
+.taken-flight.green {
+    background: #278b4b;
+}
+
+.taken-flight.yellow {
+    background: #b49a00;
+    color: #fff;
+}
+
+.taken-suit {
+    position: absolute;
+
+    left: 4px;
+    top: 3px;
+
+    font-size: 9px;
+}
+
+.taken-rank {
+    font-size: 23px;
+}
+
+.taken-flight.rank4 .taken-rank {
+    color: #000;
+}
+
+/* =========================================================
+   クリック待ち
+========================================================= */
+
+.click-prompt {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    z-index: 500;
+
+    padding: 8px 13px;
+
+    border-radius: 5px;
+
+    background: rgba(0,0,0,0.88);
+
+    border: 1px solid #666;
+
+    font-size: 12px;
+
+    color: #ddd;
+
+    pointer-events: none;
+}
+
+/* =========================================================
+   メッセージ
+========================================================= */
+
+.message {
+    position: absolute;
+
+    left: 50%;
+    bottom: 7px;
+
+    transform: translateX(-50%);
+
+    z-index: 200;
+
+    font-size: 11px;
+
+    color: #aaa;
+
+    white-space: nowrap;
+}
+
+/* =========================================================
+   最終スコア
+========================================================= */
+
+.score-panel {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    width: min(620px, 80vw);
+
+    padding: 16px;
+
+    background: rgba(20,20,20,0.97);
+
+    border: 1px solid #555;
+
+    border-radius: 8px;
+
+    z-index: 2000;
+
+    display: none;
+}
+
+.score-panel.visible {
+    display: block;
+}
+
+.final-title {
+    text-align: center;
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+    margin-bottom: 12px;
+}
+
+.score-row {
+    display: grid;
+
+    grid-template-columns:
+        45px
+        1fr
+        1fr
+        1fr
+        1fr;
+
+    gap: 5px;
+
+    padding: 5px 0;
+
+    border-bottom: 1px solid #333;
+
+    font-size: 12px;
+
+    text-align: center;
+}
+
+.score-row.header {
+    color: #999;
+}
+
+.history {
+    margin-top: 12px;
+
+    max-height: 130px;
+
+    overflow-y: auto;
+
+    font-size: 11px;
+
+    color: #aaa;
+}
+
+.history-line {
+    padding: 3px 0;
+}
+
+/* =========================================================
+   アニメーション
+========================================================= */
+
+@keyframes playAppear {
+
+    0% {
+        opacity: 0;
+        transform: scale(0.6);
+    }
+
+    70% {
+        opacity: 1;
+        transform: scale(1.08);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.played-card.appear {
+    animation:
+        playAppear 0.25s ease-out;
+}
+
+/* =========================================================
+   画面クリック待ち
+========================================================= */
+
+.table.waiting {
+    cursor: pointer;
+}
+
+.table.waiting * {
+    cursor: pointer;
+}
+
+/* =========================================================
+   小さい画面
+========================================================= */
+
+@media (max-width: 950px) {
+
+    .card,
+    .played-card,
+    .flying-card,
+    .taken-flight {
+        width: 62px;
+        height: 62px;
+    }
+
+    .card-rank,
+    .played-rank,
+    .flying-rank,
+    .taken-rank {
+        font-size: 26px;
+    }
+
+    .center-table {
+        left: 13%;
+        right: 13%;
+    }
+
+    .play-zone-b {
+        left: 26%;
+    }
+
+    .play-zone-d {
+        right: 26%;
+    }
+}
+
+@media (max-height: 700px) {
+
+    .card,
+    .played-card,
+    .flying-card,
+    .taken-flight {
+        width: 46px;
+        height: 46px;
+    }
+
+    .card-rank,
+    .played-rank,
+    .flying-rank,
+    .taken-rank {
+        font-size: 20px;
+    }
+
+    .player-a {
+        bottom: 5px;
+    }
+
+    .player-c {
+        top: 5px;
+    }
+}
+
+</style>
+</head>
+
+
+<body>
+
+<header>
+
+    <div class="title">
+        4人トリックテイキング テストプレイ
+    </div>
+
+    <div class="controls">
+
+        <button id="newGame">
+            NewGame
+        </button>
+
+
+        <button id="ruleHelp" aria-label="ルール説明">?</button>
+
+    </div>
+
+</header>
+
+<!-- =================================================
+     ルール説明モーダル
+================================================== -->
+<div class="rule-modal" id="ruleModal" aria-hidden="true">
+    <div class="rule-dialog" role="dialog" aria-modal="true" aria-labelledby="ruleDialogTitle">
+        <div class="rule-dialog-header">
+            <div class="rule-dialog-title" id="ruleDialogTitle">ゲームルール</div>
+            <button class="rule-close" id="ruleClose" aria-label="閉じる">×</button>
+        </div>
+
+        <div class="rule-language">
+            <button id="ruleJa" class="active">日本語</button>
+            <button id="ruleEn">English</button>
+        </div>
+
+        <div class="rule-content" id="ruleContent">
+            <div id="ruleJaContent">
+                <h3>ゲーム概要</h3>
+                <p>プレイヤーはA・B・C・Dの4人。Aがあなたです。</p>
+                <p>トリックの<strong>勝者と獲得者が異なる</strong>トリックテイキングゲームです。</p>
+                <p>3ラウンドを行い、<strong>合計点数が最も高いプレイヤーが勝利</strong>します。</p>
+                <p>各ラウンドでは異なるトリック方式を使用します。</p>
+
+                <h3>カード</h3>
+                <p>4スート、ランク1～9の36枚を使用します。</p>
+                <ul>
+                    <p>マストフォロー、切り札なし</p>
+                    <p>各スートのランク8・9をシャッフルし、各プレイヤーに2枚ずつ配る。これらは公開される。</p>
+                    <p>各スートのランク1～7をシャッフルし、各プレイヤーに7枚ずつ配る。ランクは非公開だが、スートは公開される。</p>
+                </ul>
+
+                <h3>トリック方式</h3>
+                <p>トリックの勝者と獲得者は異なります。<strong>トリックの獲得者が次のリードプレイヤー</strong>になります。</p>
+                <p><strong>LEFT ROUND</strong><br>トリック勝者の<strong>左隣</strong>のプレイヤーがトリックを獲得します。</p>
+                <p><strong>RIGHT ROUND</strong><br>トリック勝者の<strong>右隣</strong>のプレイヤーがトリックを獲得します。</p>
+                <p><strong>OPPOSITE ROUND</strong><br>トリック勝者の<strong>対面</strong>のプレイヤーがトリックを獲得します。</p>
+                <p>前ラウンドの最終トリック獲得者が、次ラウンドのオープニングリードプレイヤーになります。</p>
+
+                <h3>得点</h3>
+                <table>
+                    <thead><tr><th>獲得トリック数</th><th>得点</th></tr></thead>
+                    <tbody>
+                        <tr><td>1</td><td>6点</td></tr>
+                        <tr><td>2</td><td>9点</td></tr>
+                        <tr><td>3</td><td>3点</td></tr>
+                        <tr><td>その他</td><td>0点</td></tr>
+                    </tbody>
+                </table>
+                <p>さらに、獲得したトリックに含まれる<strong>ランク4のカード1枚につき1点</strong>を得ます。</p>
+            </div>
+
+            <div id="ruleEnContent" hidden>
+                <h3>Overview</h3>
+                <p>There are four players: A, B, C, and D. You are A.</p>
+                <p>This is a trick-taking game in which the <strong>winner and the player who takes the trick are different</strong>.</p>
+                <p>Play 3 rounds. The player with the <strong>highest total score wins</strong>.</p>
+                <p>Each round uses a different trick-taking method.</p>
+
+                <h3>Cards</h3>
+                <p>Use 36 cards: 4 suits, ranks 1–9.</p>
+                <ul>
+                    <p>Must follow suit.No trump.</p>
+                    <p>Shuffle all Rank 8 and 9 cards and deal 2 to each player. These cards are public.</p>
+                    <p>Shuffle all Rank 1–7 cards and deal 7 to each player. Ranks are hidden, but suits are public.</p>
+                </ul>
+
+                <h3>Trick Methods</h3>
+                <p>The winner and the player who takes the trick are different. <strong>The player who takes the trick leads the next trick.</strong></p>
+                <p><strong>LEFT ROUND</strong><br>The player to the <strong>left</strong> of the trick winner takes the trick.</p>
+                <p><strong>RIGHT ROUND</strong><br>The player to the <strong>right</strong> of the trick winner takes the trick.</p>
+                <p><strong>OPPOSITE ROUND</strong><br>The player <strong>opposite</strong> the trick winner takes the trick.</p>
+                <p>The player who takes the final trick of the previous round leads the next round.</p>
+
+                <h3>Scoring</h3>
+                <table>
+                    <thead><tr><th>Tricks Taken</th><th>Points</th></tr></thead>
+                    <tbody>
+                        <tr><td>1</td><td>6</td></tr>
+                        <tr><td>2</td><td>9</td></tr>
+                        <tr><td>3</td><td>3</td></tr>
+                        <tr><td>Other</td><td>0</td></tr>
+                    </tbody>
+                </table>
+                <p>In addition, score <strong>1 point for each Rank 4 card</strong> in the tricks you take.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div
+    class="table"
+    id="table"
+>
+
+
+    <!-- =================================================
+         コンパクトな卓
+    ================================================== -->
+
+    <div class="center-table"></div>
+
+    <div
+        class="rule-badge"
+        id="ruleBadge"
+    >
+        LEFT ROUND
+    </div>
+
+
+    <!-- =================================================
+         状態
+    ================================================== -->
+
+    <div
+        class="status"
+        id="status"
+    >
+        第1トリック　リード：A
+    </div>
+
+
+    <!-- =================================================
+         C
+    ================================================== -->
+
+    <div
+        class="player player-c"
+        id="playerC"
+    >
+
+        <div
+            class="hand"
+            id="handC"
+        ></div>
+
+        <div
+            class="score-display"
+            id="scoreC"
+        >
+            <div class="confirmed-score">0</div>
+            <div class="current-round-score">0（＋0）</div>
+        </div>
+
+        <div class="player-name">
+            C
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         B
+    ================================================== -->
+
+    <div
+        class="player player-b"
+        id="playerB"
+    >
+
+        <div
+            class="hand vertical"
+            id="handB"
+        ></div>
+
+        <div
+            class="score-display"
+            id="scoreB"
+        >
+            <div class="confirmed-score">0</div>
+            <div class="current-round-score">0（＋0）</div>
+        </div>
+
+        <div class="player-name">
+            B
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         D
+    ================================================== -->
+
+    <div
+        class="player player-d"
+        id="playerD"
+    >
+
+        <div
+            class="hand vertical"
+            id="handD"
+        ></div>
+
+        <div
+            class="score-display"
+            id="scoreD"
+        >
+            <div class="confirmed-score">0</div>
+            <div class="current-round-score">0（＋0）</div>
+        </div>
+
+        <div class="player-name">
+            D
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         A
+    ================================================== -->
+
+    <div
+        class="player player-a"
+        id="playerA"
+    >
+
+        <div
+            class="score-display"
+            id="scoreA"
+        >
+            <div class="confirmed-score">0</div>
+            <div class="current-round-score">0（＋0）</div>
+        </div>
+
+        <div
+            class="hand"
+            id="handA"
+        ></div>
+
+        <div class="player-name">
+            A（あなた）
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         プレイカード置き場
+    ================================================== -->
+
+    <div
+        class="play-zone play-zone-a"
+        id="playZoneA"
+    ></div>
+
+    <div
+        class="play-zone play-zone-b"
+        id="playZoneB"
+    ></div>
+
+    <div
+        class="play-zone play-zone-c"
+        id="playZoneC"
+    ></div>
+
+    <div
+        class="play-zone play-zone-d"
+        id="playZoneD"
+    ></div>
+
+
+    <!-- =================================================
+         メッセージ
+    ================================================== -->
+
+    <div
+        class="message"
+        id="message"
+    ></div>
+
+
+    <!-- =================================================
+         最終スコア
+    ================================================== -->
+
+    <div
+        class="score-panel"
+        id="scorePanel"
+    >
+
+        <div class="final-title">
+            ゲーム終了
+        </div>
+
+        <div class="score-row header">
+
+            <div>人</div>
+            <div>1R</div>
+            <div>2R</div>
+            <div>3R</div>
+            <div>合計</div>
+
+        </div>
+
+        <div id="scoreRows"></div>
+
+        <div
+            class="history"
+            id="history"
+        ></div>
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   基本定義
+========================================================= */
+
+const PLAYERS = [
+    "A",
+    "B",
+    "C",
+    "D"
+];
+
+const SUITS = [
+    "赤",
+    "青",
+    "緑",
+    "黄"
+];
+
+const SUIT_CLASS = {
+
+    "赤": "red",
+    "青": "blue",
+    "緑": "green",
+    "黄": "yellow"
+
+};
+
+const SUIT_LABEL = {
+
+    "赤": "R",
+    "青": "B",
+    "緑": "G",
+    "黄": "Y"
+
+};
+
+
+/* =========================================================
+   ゲーム状態
+========================================================= */
+
+let game = null;
+
+
+/* =========================================================
+   時計回り
+========================================================= */
+
+function nextPlayer(player) {
+
+    const index =
+        PLAYERS.indexOf(player);
+
+    return PLAYERS[
+        (index + 1) % 4
+    ];
+
+}
+
+
+/* =========================================================
+   勝者の左隣
+========================================================= */
+
+function leftOf(player) {
+
+    return nextPlayer(player);
+
+}
+
+
+/* =========================================================
+   WIN → TAKE の関係
+========================================================= */
+
+const TRICK_TYPES = [
+    "left",
+    "right",
+    "opposite"
+];
+
+function oppositePlayer(player) {
+
+    const index = PLAYERS.indexOf(player);
+
+    return PLAYERS[(index + 2) % PLAYERS.length];
+
+}
+
+function takePlayerForWinner(winner, trickType) {
+
+    if (trickType === "right") {
+        return cpuPreviousPlayer(winner);
+    }
+
+    if (trickType === "opposite") {
+        return oppositePlayer(winner);
+    }
+
+    return nextPlayer(winner);
+}
+
+function trickTypeLabel(trickType) {
+
+    if (trickType === "right") return "RIGHT ROUND";
+    if (trickType === "opposite") return "OPPOSITE ROUND";
+    return "LEFT ROUND";
+}
+
+
+/* =========================================================
+   シャッフル
+========================================================= */
+
+function shuffle(array) {
+
+    const result = [...array];
+
+    for (
+        let i = result.length - 1;
+        i > 0;
+        i--
+    ) {
+
+        const j =
+            Math.floor(
+                Math.random() * (i + 1)
+            );
+
+        [
+            result[i],
+            result[j]
+        ] =
+        [
+            result[j],
+            result[i]
+        ];
+
+    }
+
+    return result;
+
+}
+
+
+/* =========================================================
+   デッキ作成
+========================================================= */
+
+function createDeck() {
+
+    const deck = [];
+
+    for (
+        const suit of SUITS
+    ) {
+
+        for (
+            let rank = 1;
+            rank <= 9;
+            rank++
+        ) {
+
+            deck.push({
+
+                id:
+                    crypto.randomUUID(),
+
+                suit:
+                    suit,
+
+                rank:
+                    rank,
+
+                public:
+                    rank >= 8
+
+            });
+
+        }
+
+    }
+
+    return deck;
+
+}
+
+
+/* =========================================================
+   配札
+========================================================= */
+
+function dealCards() {
+
+    const deck =
+        createDeck();
+
+
+    const publicCards =
+        shuffle(
+            deck.filter(
+                card =>
+                    card.rank >= 8
+            )
+        );
+
+
+    const privateCards =
+        shuffle(
+            deck.filter(
+                card =>
+                    card.rank <= 7
+            )
+        );
+
+
+    const hands = {
+
+        A: [],
+        B: [],
+        C: [],
+        D: []
+
+    };
+
+
+    /*
+     * 8・9を2枚ずつ
+     */
+
+    for (
+        const player of PLAYERS
+    ) {
+
+        hands[player].push(
+            ...publicCards.splice(0, 2)
+        );
+
+    }
+
+
+    /*
+     * 1〜7を7枚ずつ
+     */
+
+    for (
+        const player of PLAYERS
+    ) {
+
+        hands[player].push(
+            ...privateCards.splice(0, 7)
+        );
+
+    }
+
+
+    return hands;
+
+}
+
+
+/* =========================================================
+   新規ゲーム
+========================================================= */
+
+function newGame() {
+
+    if (game && game.cpuTimer) {
+        clearTimeout(game.cpuTimer);
+    }
+
+    const roundTrickTypes = shuffle([...TRICK_TYPES]);
+
+    game = {
+
+        hands: dealCards(),
+
+        leader: "A",
+        currentPlayer: "A",
+        currentTrick: [],
+        trickNumber: 1,
+
+        currentRound: 1,
+        roundTrickTypes: roundTrickTypes,
+        trickType: roundTrickTypes[0],
+
+        roundScores: { A: [0, 0, 0], B: [0, 0, 0], C: [0, 0, 0], D: [0, 0, 0] },
+
+        wonTricks: { A: [], B: [], C: [], D: [] },
+
+        history: [],
+        waitingForClick: false,
+        resolving: false,
+        gameOver: false,
+        cpuTimer: null
+
+    };
+
+    clearAllPlayZones();
+    hideScorePanel();
+    render();
+
+    setMessage(
+        `第1ラウンド：Aがリードします。`
+    );
+
+}
+
+
+/* =========================================================
+   メッセージ
+========================================================= */
+
+function setMessage(text) {
+
+    document
+        .getElementById("message")
+        .textContent =
+        text;
+
+}
+
+
+/* =========================================================
+   合法手
+========================================================= */
+
+function canPlayCard(
+    player,
+    card
+) {
+
+    if (
+        game.currentTrick.length === 0
+    ) {
+
+        return true;
+
+    }
+
+
+    const leadSuit =
+        game.currentTrick[0]
+            .card
+            .suit;
+
+
+    const hasLeadSuit =
+        game.hands[player].some(
+            c =>
+                c.suit === leadSuit
+        );
+
+
+    /*
+     * リードスートを持っていなければ
+     * 何でも出せる。
+     */
+
+    if (
+        !hasLeadSuit
+    ) {
+
+        return true;
+
+    }
+
+
+    /*
+     * 持っているならフォロー必須。
+     */
+
+    return (
+        card.suit === leadSuit
+    );
+
+}
+
+
+/* =========================================================
+   スコア
+========================================================= */
+
+function baseScore(tricks) {
+
+    if (tricks === 1) return 6;
+    if (tricks === 2) return 9;
+    if (tricks === 3) return 3;
+
+    return 0;
+
+}
+
+
+function countRank4(player) {
+
+    let count = 0;
+
+    for (
+        const trick of
+        game.wonTricks[player]
+    ) {
+
+        for (
+            const card of trick
+        ) {
+
+            if (
+                card.rank === 4
+            ) {
+
+                count++;
+
+            }
+
+        }
+
+    }
+
+    return count;
+
+}
+
+
+function currentRoundScore(player) {
+
+    const tricks = game.wonTricks[player].length;
+    return baseScore(tricks) + countRank4(player);
+
+}
+
+function totalScore(player) {
+
+    let total = 0;
+    for (let i = 0; i < game.currentRound - 1; i++) {
+        total += game.roundScores[player][i];
+    }
+    total += currentRoundScore(player);
+    return total;
+
+}
+
+
+/* =========================================================
+   スコア表示
+========================================================= */
+
+function renderScores() {
+
+    for (
+        const player of PLAYERS
+    ) {
+
+        const tricks =
+            game.wonTricks[player].length;
+
+        let confirmedScore = 0;
+
+        for (
+            let i = 0;
+            i < game.currentRound - 1;
+            i++
+        ) {
+
+            confirmedScore +=
+                game.roundScores[player][i];
+
+        }
+
+        const currentScore =
+            currentRoundScore(player);
+
+        document
+            .getElementById(
+                `score${player}`
+            )
+            .innerHTML =
+                `<div class="confirmed-score">${confirmedScore}</div>` +
+                `<div class="current-round-score">${tricks}（＋${currentScore}）</div>`;
+
+    }
+
+}
+
+
+/* =========================================================
+   カード生成
+========================================================= */
+
+function createHandCard(
+    card,
+    hidden,
+    playable,
+    disabled
+) {
+
+    const element =
+        document.createElement("div");
+
+
+    element.className =
+        `card ${SUIT_CLASS[card.suit]}`;
+
+    if (card.rank === 4) {
+        element.classList.add("rank4");
+    }
+
+
+    if (hidden) {
+
+        element.classList.add(
+            "hidden"
+        );
+
+    }
+
+
+    if (card.public) {
+
+        element.classList.add(
+            "public-card"
+        );
+
+    }
+
+
+    if (playable) {
+
+        element.classList.add(
+            "playable"
+        );
+
+    }
+
+
+    if (disabled) {
+
+        element.classList.add(
+            "not-playable"
+        );
+
+    }
+
+
+    element.dataset.cardId =
+        card.id;
+
+
+    const suit =
+        document.createElement("div");
+
+    suit.className =
+        "card-suit";
+
+    suit.textContent =
+        SUIT_LABEL[card.suit];
+
+
+    const rank =
+        document.createElement("div");
+
+    rank.className =
+        "card-rank";
+
+    rank.textContent =
+        card.rank;
+
+
+    element.appendChild(suit);
+    element.appendChild(rank);
+
+
+    return element;
+
+}
+
+
+/* =========================================================
+   手札描画
+========================================================= */
+
+function renderHand(player) {
+
+    const container =
+        document.getElementById(
+            `hand${player}`
+        );
+
+
+    container.innerHTML = "";
+
+
+    const hand =
+        game.hands[player];
+
+
+    const privateCards =
+        hand.filter(
+            card =>
+                !card.public
+        );
+
+
+    const publicCards =
+        hand.filter(
+            card =>
+                card.public
+        );
+
+
+
+
+    const groups = [
+        ...privateCards,
+        ...publicCards
+    ];
+
+
+    groups.forEach(
+        (card, index) => {
+
+            if (
+                index === privateCards.length &&
+                privateCards.length > 0
+            ) {
+
+                const separator =
+                    document.createElement("div");
+
+                separator.className =
+                    "separator";
+
+                container.appendChild(
+                    separator
+                );
+
+            }
+
+
+            const hidden =
+                !card.public &&
+                player !== "A";
+
+
+            const playable =
+                player === "A" &&
+                game.currentPlayer === "A" &&
+                !game.gameOver &&
+                !game.waitingForClick &&
+                canPlayCard(
+                    "A",
+                    card
+                );
+
+
+            const disabled =
+                player === "A" &&
+                game.currentPlayer === "A" &&
+                !playable;
+
+
+            const element =
+                createHandCard(
+                    card,
+                    hidden,
+                    playable,
+                    disabled
+                );
+
+
+            if (
+                playable
+            ) {
+
+                element.addEventListener(
+                    "click",
+                    () => {
+
+                        playHumanCard(
+                            card.id,
+                            element
+                        );
+
+                    }
+                );
+
+            }
+
+
+            container.appendChild(
+                element
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   全描画
+========================================================= */
+
+function render() {
+
+    for (
+        const player of PLAYERS
+    ) {
+
+        renderHand(player);
+
+    }
+
+    renderScores();
+    renderStatus();
+
+}
+
+
+/* =========================================================
+   状態表示
+========================================================= */
+
+function renderStatus() {
+
+    const status =
+        document.getElementById(
+            "status"
+        );
+
+
+    if (
+        game.gameOver
+    ) {
+
+        status.textContent =
+            "ゲーム終了";
+
+        return;
+
+    }
+
+
+    const ruleBadge =
+        document.getElementById(
+            "ruleBadge"
+        );
+
+    ruleBadge.textContent =
+        trickTypeLabel(game.trickType);
+
+    status.textContent =
+        `第${game.currentRound}ラウンド　` +
+        `第${game.trickNumber}トリック　` +
+        `リード：${game.leader}　` +
+        `手番：${game.currentPlayer}　` +
+        `${game.currentTrick.length}/4枚`;
+
+}
+
+
+/* =========================================================
+   飛行カード生成
+========================================================= */
+
+function createFlyingCard(card) {
+
+    const element =
+        document.createElement("div");
+
+
+    element.className =
+        `flying-card ${SUIT_CLASS[card.suit]}`;
+
+    if (card.rank === 4) {
+        element.classList.add("rank4");
+    }
+
+
+    const suit =
+        document.createElement("div");
+
+    suit.className =
+        "flying-suit";
+
+    suit.textContent =
+        SUIT_LABEL[card.suit];
+
+
+    const rank =
+        document.createElement("div");
+
+    rank.className =
+        "flying-rank";
+
+    rank.textContent =
+        card.rank;
+
+
+    element.appendChild(suit);
+    element.appendChild(rank);
+
+
+    return element;
+
+}
+
+
+/* =========================================================
+   プレイ先座標
+========================================================= */
+
+function getPlayZoneCenter(player) {
+
+    const zone =
+        document.getElementById(
+            `playZone${player}`
+        );
+
+
+    const rect =
+        zone.getBoundingClientRect();
+
+
+    return {
+
+        x:
+            rect.left +
+            rect.width / 2,
+
+        y:
+            rect.top +
+            rect.height / 2
+
+    };
+
+}
+
+
+/* =========================================================
+   手札カードからプレイ位置へ
+========================================================= */
+
+function animateCardToPlayZone(
+    sourceElement,
+    card,
+    player
+) {
+
+    return new Promise(
+        resolve => {
+
+            const source =
+                sourceElement.getBoundingClientRect();
+
+
+            const flying =
+                createFlyingCard(card);
+
+
+            document.body.appendChild(
+                flying
+            );
+
+
+            const startX =
+                source.left +
+                source.width / 2 -
+                27;
+
+
+            const startY =
+                source.top +
+                source.height / 2 -
+                27;
+
+
+            const target =
+                getPlayZoneCenter(
+                    player
+                );
+
+
+            flying.style.left =
+                `${startX}px`;
+
+            flying.style.top =
+                `${startY}px`;
+
+
+            flying.style.transform =
+                "scale(1.0)";
+
+
+            requestAnimationFrame(
+                () => {
+
+                    requestAnimationFrame(
+                        () => {
+
+                            flying.style.left =
+                                `${target.x - 27}px`;
+
+                            flying.style.top =
+                                `${target.y - 27}px`;
+
+                            flying.style.transform =
+                                "scale(0.96)";
+
+                        }
+                    );
+
+                }
+            );
+
+
+            setTimeout(
+                () => {
+
+                    flying.remove();
+
+                    showPlayedCard(
+                        player,
+                        card
+                    );
+
+                    resolve();
+
+                },
+                360
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   出されたカード表示
+========================================================= */
+
+function showPlayedCard(
+    player,
+    card
+) {
+
+    const zone =
+        document.getElementById(
+            `playZone${player}`
+        );
+
+
+    const element =
+        document.createElement("div");
+
+
+    element.className =
+        `played-card ${SUIT_CLASS[card.suit]} appear`;
+
+    if (card.rank === 4) {
+        element.classList.add("rank4");
+    }
+
+
+    const suit =
+        document.createElement("div");
+
+    suit.className =
+        "played-suit";
+
+    suit.textContent =
+        SUIT_LABEL[card.suit];
+
+
+    const rank =
+        document.createElement("div");
+
+    rank.className =
+        "played-rank";
+
+    rank.textContent =
+        card.rank;
+
+
+    element.appendChild(suit);
+    element.appendChild(rank);
+
+
+    zone.appendChild(
+        element
+    );
+
+}
+
+
+/* =========================================================
+   Aのプレイ
+========================================================= */
+
+async function playHumanCard(cardId, sourceElement) {
+
+    if (
+        game.gameOver ||
+        game.waitingForClick ||
+        game.resolving
+    ) {
+        return;
+    }
+
+    if (game.currentPlayer !== "A") {
+        return;
+    }
+
+    const index = game.hands.A.findIndex(
+        card => card.id === cardId
+    );
+
+    if (index < 0) {
+        return;
+    }
+
+    const card = game.hands.A[index];
+
+    if (!canPlayCard("A", card)) {
+
+        setMessage(
+            "リードスートをフォローしてください。"
+        );
+
+        return;
+    }
+
+    game.resolving = true;
+
+    /*
+     * 重要：
+     * render()する前に、クリックされたカードの
+     * 現在位置を取得しておく。
+     */
+    const rect = sourceElement.getBoundingClientRect();
+
+    /*
+     * 手札から削除
+     */
+    game.hands.A.splice(index, 1);
+
+    /*
+     * トリックに追加
+     */
+    game.currentTrick.push({
+        player: "A",
+        card: card
+    });
+
+    /*
+     * 手札を更新。
+     * この時点で元のDOMは消えるが、
+     * 座標 rect はすでに保存済み。
+     */
+    render();
+
+    /*
+     * 保存しておいた座標から
+     * Aのプレイ位置へカードを移動。
+     */
+    await animateCardFromRect(
+        rect,
+        card,
+        "A"
+    );
+
+    game.resolving = false;
+
+    afterCardPlayed();
+}
+
+
+/* =========================================================
+   CPUのカード選択
+========================================================= */
+
+/*
+ * CPUの判断は「その場でTAKEできるか」ではなく、
+ * 候補カードを出した後に残りゲームを最後までロールアウトし、
+ * 最終的なTAKE数で比較する。
+ *
+ * 相手の非公開ランクは、現在見えているスート構成・公開カード・
+ * 既に場に出たカードと矛盾しない範囲でランダムに割り当てる。
+ * そのため、CPUが相手の実際の非公開ランクを直接覗くことはない。
+ */
+
+function cpuPreviousPlayer(player) {
+
+    const index = PLAYERS.indexOf(player);
+
+    return PLAYERS[
+        (index - 1 + PLAYERS.length) % PLAYERS.length
+    ];
+}
+
+function cpuStrategicNeighbor(player, trickType) {
+
+    return takePlayerForWinner(
+        player,
+        trickType
+    );
+}
+
+
+function cpuCloneCard(card) {
+
+    return {
+        id: card.id,
+        suit: card.suit,
+        rank: card.rank,
+        public: card.public
+    };
+}
+
+
+function cpuCloneSimulationState(state) {
+
+    return {
+
+        hands: {
+            A: state.hands.A.map(cpuCloneCard),
+            B: state.hands.B.map(cpuCloneCard),
+            C: state.hands.C.map(cpuCloneCard),
+            D: state.hands.D.map(cpuCloneCard)
+        },
+
+        currentTrick: state.currentTrick.map(
+            played => ({
+                player: played.player,
+                card: cpuCloneCard(played.card)
+            })
+        ),
+
+        currentPlayer: state.currentPlayer,
+
+        trickType: state.trickType,
+
+        takeCount: {
+            A: state.takeCount.A,
+            B: state.takeCount.B,
+            C: state.takeCount.C,
+            D: state.takeCount.D
+        },
+
+        rank4Count: {
+            A: state.rank4Count.A,
+            B: state.rank4Count.B,
+            C: state.rank4Count.C,
+            D: state.rank4Count.D
+        }
+    };
+}
+
+
+function cpuBuildSimulationWorld(observer) {
+
+    const usedPrivateRanks = {
+        赤: new Set(),
+        青: new Set(),
+        緑: new Set(),
+        黄: new Set()
+    };
+
+    /*
+     * すでに表になっているカードは全員がランクを知っている。
+     */
+
+    for (const player of PLAYERS) {
+
+        for (const trick of game.wonTricks[player]) {
+
+            for (const card of trick) {
+
+                if (
+                    card.rank >= 1 &&
+                    card.rank <= 7
+                ) {
+
+                    usedPrivateRanks[card.suit].add(
+                        card.rank
+                    );
+                }
+            }
+        }
+    }
+
+    for (const played of game.currentTrick) {
+
+        const card = played.card;
+
+        if (
+            card.rank >= 1 &&
+            card.rank <= 7
+        ) {
+
+            usedPrivateRanks[card.suit].add(
+                card.rank
+            );
+        }
+    }
+
+
+    const hands = {
+        A: [],
+        B: [],
+        C: [],
+        D: []
+    };
+
+    /*
+     * observer自身は自分の手札を完全に知っている。
+     * 他プレイヤーは8・9だけランクが既知。
+     * 1〜7はまずスートだけを保持し、後で割り当てる。
+     */
+
+    for (const player of PLAYERS) {
+
+        for (const card of game.hands[player]) {
+
+            if (
+                player === observer ||
+                card.public
+            ) {
+
+                hands[player].push(
+                    cpuCloneCard(card)
+                );
+
+            } else {
+
+                hands[player].push({
+                    id: card.id,
+                    suit: card.suit,
+                    rank: null,
+                    public: false
+                });
+            }
+        }
+    }
+
+
+    /*
+     * observer以外の1〜7について、
+     * 各スートで残っているランクをランダムに割り当てる。
+     */
+
+    for (const suit of SUITS) {
+
+        const availableRanks = [];
+
+        for (let rank = 1; rank <= 7; rank++) {
+
+            if (
+                !usedPrivateRanks[suit].has(rank)
+            ) {
+
+                const observerHasRank = game.hands[observer].some(
+                    card =>
+                        card.suit === suit &&
+                        card.rank === rank
+                );
+
+                if (!observerHasRank) {
+
+                    availableRanks.push(rank);
+                }
+            }
+        }
+
+        const slots = [];
+
+        for (const player of PLAYERS) {
+
+            if (player === observer) {
+                continue;
+            }
+
+            for (const card of hands[player]) {
+
+                if (
+                    card.suit === suit &&
+                    card.rank === null
+                ) {
+
+                    slots.push(card);
+                }
+            }
+        }
+
+        const shuffledRanks = shuffle(
+            availableRanks
+        );
+
+        /*
+         * 通常は枚数が一致する。
+         * 念のため一致しない場合は実カード情報を使って
+         * 不正なnullランクを残さない。
+         */
+
+        for (let i = 0; i < slots.length; i++) {
+
+            if (i < shuffledRanks.length) {
+
+                slots[i].rank = shuffledRanks[i];
+
+            } else {
+
+                slots[i].rank = 1;
+            }
+        }
+    }
+
+
+    const takeCount = {
+        A: game.wonTricks.A.length,
+        B: game.wonTricks.B.length,
+        C: game.wonTricks.C.length,
+        D: game.wonTricks.D.length
+    };
+
+    const rank4Count = {
+        A: countRank4FromTricks(game.wonTricks.A),
+        B: countRank4FromTricks(game.wonTricks.B),
+        C: countRank4FromTricks(game.wonTricks.C),
+        D: countRank4FromTricks(game.wonTricks.D)
+    };
+
+
+    return {
+
+        hands: hands,
+
+        currentTrick: game.currentTrick.map(
+            played => ({
+                player: played.player,
+                card: cpuCloneCard(played.card)
+            })
+        ),
+
+        currentPlayer: game.currentPlayer,
+
+        trickType: game.trickType,
+
+        takeCount: takeCount,
+
+        rank4Count: rank4Count
+    };
+}
+
+
+function countRank4FromTricks(tricks) {
+
+    let count = 0;
+
+    for (const trick of tricks) {
+
+        for (const card of trick) {
+
+            if (card.rank === 4) {
+                count++;
+            }
+        }
+    }
+
+    return count;
+}
+
+
+function cpuSimulationCanPlay(state, player, card) {
+
+    if (state.currentTrick.length === 0) {
+        return true;
+    }
+
+    const leadSuit =
+        state.currentTrick[0].card.suit;
+
+    const hasLeadSuit =
+        state.hands[player].some(
+            candidate =>
+                candidate.suit === leadSuit
+        );
+
+    if (!hasLeadSuit) {
+        return true;
+    }
+
+    return card.suit === leadSuit;
+}
+
+
+function cpuSimulationLegalCards(state, player) {
+
+    return state.hands[player].filter(
+        card =>
+            cpuSimulationCanPlay(
+                state,
+                player,
+                card
+            )
+    );
+}
+
+
+function cpuSimulationDetermineWinner(trick) {
+
+    const leadSuit = trick[0].card.suit;
+
+    let winner =
+        trick.find(
+            played =>
+                played.card.suit === leadSuit
+        );
+
+    for (const played of trick) {
+
+        if (
+            played.card.suit === leadSuit &&
+            played.card.rank > winner.card.rank
+        ) {
+
+            winner = played;
+        }
+    }
+
+    return winner.player;
+}
+
+
+function cpuSimulationResolveTrick(state) {
+
+    const winner =
+        cpuSimulationDetermineWinner(
+            state.currentTrick
+        );
+
+    const collector = takePlayerForWinner(winner, state.trickType);
+
+    state.takeCount[collector]++;
+
+    for (const played of state.currentTrick) {
+
+        if (played.card.rank === 4) {
+
+            state.rank4Count[collector]++;
+        }
+    }
+
+    state.currentTrick = [];
+    state.currentPlayer = collector;
+}
+
+
+function cpuSimulationApplyCard(state, player, card) {
+
+    const index =
+        state.hands[player].findIndex(
+            candidate =>
+                candidate.id === card.id
+        );
+
+    if (index < 0) {
+        return false;
+    }
+
+    state.hands[player].splice(index, 1);
+
+    state.currentTrick.push({
+        player: player,
+        card: cpuCloneCard(card)
+    });
+
+    if (state.currentTrick.length === 4) {
+
+        cpuSimulationResolveTrick(
+            state
+        );
+    } else {
+
+        state.currentPlayer = nextPlayer(player);
+    }
+
+    return true;
+}
+
+
+function cpuSimulationRandomCard(state, player) {
+
+    const legal =
+        cpuSimulationLegalCards(
+            state,
+            player
+        );
+
+    if (legal.length === 0) {
+        return null;
+    }
+
+    return legal[
+        Math.floor(
+            Math.random() * legal.length
+        )
+    ];
+}
+
+
+function cpuSimulationRemainingTopCount(state, player) {
+
+    let count = 0;
+
+    for (const suit of SUITS) {
+
+        const ownCards =
+            state.hands[player].filter(
+                card =>
+                    card.suit === suit
+            );
+
+        if (ownCards.length === 0) {
+            continue;
+        }
+
+        const maxOwnRank = Math.max(
+            ...ownCards.map(
+                card => card.rank
+            )
+        );
+
+        let higherExists = false;
+
+        for (const other of PLAYERS) {
+
+            if (other === player) {
+                continue;
+            }
+
+            if (
+                state.hands[other].some(
+                    card =>
+                        card.suit === suit &&
+                        card.rank > maxOwnRank
+                )
+            ) {
+
+                higherExists = true;
+                break;
+            }
+        }
+
+        if (!higherExists) {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+
+function cpuSimulationSampleImmediateResult(
+    state,
+    player,
+    card
+) {
+
+    const sample =
+        cpuCloneSimulationState(
+            state
+        );
+
+    cpuSimulationApplyCard(
+        sample,
+        player,
+        card
+    );
+
+    while (
+        sample.currentTrick.length > 0 &&
+        sample.currentTrick.length < 4
+    ) {
+
+        const turnPlayer =
+            sample.currentPlayer;
+
+        const randomCard =
+            cpuSimulationRandomCard(
+                sample,
+                turnPlayer
+            );
+
+        if (!randomCard) {
+            break;
+        }
+
+        cpuSimulationApplyCard(
+            sample,
+            turnPlayer,
+            randomCard
+        );
+    }
+
+    return sample;
+}
+
+
+function cpuSimulationTargetScore(
+    before,
+    after,
+    player,
+    immediateSampleCount
+) {
+
+    const strategicTarget =
+        cpuStrategicNeighbor(player, game.trickType);
+
+    const ownTake =
+        after.takeCount[player];
+
+    const targetTake =
+        after.takeCount[strategicTarget];
+
+    const ownFutureCapacity =
+        cpuSimulationRemainingTopCount(
+            after,
+            player
+        );
+
+    const targetFutureCapacity =
+        cpuSimulationRemainingTopCount(
+            after,
+            strategicTarget
+        );
+
+    const ownNeed =
+        Math.max(
+            0,
+            2 - ownTake
+        );
+
+    let ownTargetScore;
+
+    if (ownTake > 2) {
+
+        ownTargetScore = -10000;
+
+    } else if (ownTake === 2) {
+
+        /*
+         * 2 TAKE到達後は、残りで追加TAKEしないことが最優先。
+         */
+
+        ownTargetScore =
+            2500 - ownFutureCapacity * 250;
+
+    } else {
+
+        /*
+         * 今後取るべきTAKE数と、
+         * その原因になり得る残りの勝ち筋を比較する。
+         */
+
+        const difference =
+            Math.abs(
+                ownFutureCapacity - ownNeed
+            );
+
+        ownTargetScore =
+            1500 - difference * 220;
+
+        if (
+            ownFutureCapacity < ownNeed
+        ) {
+
+            ownTargetScore -=
+                (ownNeed - ownFutureCapacity) * 250;
+        }
+    }
+
+
+    let targetScore;
+
+    if (targetTake === 2) {
+
+        /*
+         * 自分がWINしたときにTAKEする相手がすでに2なら、
+         * 3以上へ逃がす方がよい。
+         */
+
+        targetScore =
+            targetFutureCapacity > 0
+                ? 500
+                : -500;
+
+    } else {
+
+        const targetNeed =
+            2 - targetTake;
+
+        if (
+            targetFutureCapacity === targetNeed
+        ) {
+
+            /*
+             * そのままでは戦略対象がちょうど2になりそう。
+             */
+
+            targetScore = -700;
+
+        } else if (
+            targetFutureCapacity > targetNeed
+        ) {
+
+            /*
+             * 2を超えて逃げられる余地がある。
+             */
+
+            targetScore = 250;
+
+        } else {
+
+            /*
+             * 2に届かないなら、少なくとも「ちょうど2」は避けられる。
+             */
+
+            targetScore = 100;
+        }
+    }
+
+
+    let rank4Self = 0;
+    let rank4Other = 0;
+
+    for (const candidate of PLAYERS) {
+
+        const delta =
+            after.rank4Count[candidate] -
+            before.rank4Count[candidate];
+
+        if (candidate === player) {
+            rank4Self += delta;
+        } else {
+            rank4Other += delta;
+        }
+    }
+
+
+    return [
+        ownTargetScore,
+        targetScore,
+        rank4Self * 30,
+        -rank4Other * 10,
+        immediateSampleCount
+    ];
+}
+
+
+function cpuCompareTuple(a, b) {
+
+    for (let i = 0; i < a.length; i++) {
+
+        if (a[i] > b[i]) {
+            return 1;
+        }
+
+        if (a[i] < b[i]) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+
+function cpuSimulationChooseCard(state, player) {
+
+    const legal =
+        cpuSimulationLegalCards(
+            state,
+            player
+        );
+
+    if (legal.length <= 1) {
+        return legal[0] || null;
+    }
+
+    let best = legal[0];
+    let bestScore = [-Infinity];
+
+    for (const card of legal) {
+
+        const samples = 2;
+        const totals = [];
+
+        let ownTarget = 0;
+        let leftTarget = 0;
+        let rank4Self = 0;
+        let rank4Other = 0;
+
+        for (let i = 0; i < samples; i++) {
+
+            const after =
+                cpuSimulationSampleImmediateResult(
+                    state,
+                    player,
+                    card
+                );
+
+            const score =
+                cpuSimulationTargetScore(
+                    state,
+                    after,
+                    player,
+                    i
+                );
+
+            ownTarget += score[0];
+            leftTarget += score[1];
+            rank4Self += score[2];
+            rank4Other += score[3];
+        }
+
+        totals.push(
+            ownTarget / samples,
+            leftTarget / samples,
+            rank4Self / samples,
+            rank4Other / samples,
+            Math.random()
+        );
+
+        if (
+            cpuCompareTuple(
+                totals,
+                bestScore
+            ) > 0
+        ) {
+
+            bestScore = totals;
+            best = card;
+        }
+    }
+
+    return best;
+}
+
+
+function cpuSimulationRollout(state) {
+
+    let safety = 0;
+
+    while (
+        safety++ < 100 &&
+        Object.values(state.takeCount).reduce(
+            (sum, count) => sum + count,
+            0
+        ) < 9
+    ) {
+
+        if (state.currentTrick.length === 4) {
+
+            cpuSimulationResolveTrick(
+                state
+            );
+
+            continue;
+        }
+
+        const player =
+            state.currentPlayer;
+
+        let card;
+
+        if (player === "A") {
+
+            card =
+                cpuSimulationRandomCard(
+                    state,
+                    player
+                );
+
+        } else {
+
+            card =
+                cpuSimulationChooseCard(
+                    state,
+                    player
+                );
+        }
+
+        if (!card) {
+            break;
+        }
+
+        cpuSimulationApplyCard(
+            state,
+            player,
+            card
+        );
+    }
+
+    return state;
+}
+
+
+function cpuFinalRank4Total(state, player) {
+
+    return state.rank4Count[player];
+}
+
+
+function chooseCPUCard(player) {
+
+    const legal =
+        game.hands[player].filter(
+            card =>
+                canPlayCard(
+                    player,
+                    card
+                )
+        );
+
+    if (legal.length <= 1) {
+        return legal[0];
+    }
+
+    /*
+     * 同じ隠しカード配置を複数候補で共有することで、
+     * ランダム誤差を減らす。
+     */
+
+    const worldCount = 8;
+    const rolloutsPerWorld = 3;
+
+    const worlds = [];
+
+    for (let i = 0; i < worldCount; i++) {
+
+        worlds.push(
+            cpuBuildSimulationWorld(
+                player
+            )
+        );
+    }
+
+
+    const strategicTarget =
+        cpuStrategicNeighbor(player, game.trickType);
+
+    let best = legal[0];
+    let bestMetrics = null;
+
+
+    for (const candidate of legal) {
+
+        let exactOwn2 = 0;
+        let leftNot2 = 0;
+        let ownRank4Total = 0;
+        let otherRank4Total = 0;
+        let totalRuns = 0;
+
+        for (const world of worlds) {
+
+            for (
+                let rollout = 0;
+                rollout < rolloutsPerWorld;
+                rollout++
+            ) {
+
+                const simulation =
+                    cpuCloneSimulationState(
+                        world
+                    );
+
+                if (
+                    !cpuSimulationApplyCard(
+                        simulation,
+                        player,
+                        candidate
+                    )
+                ) {
+
+                    continue;
+                }
+
+                cpuSimulationRollout(
+                    simulation
+                );
+
+                if (
+                    simulation.takeCount[player] === 2
+                ) {
+
+                    exactOwn2++;
+                }
+
+                if (
+                    simulation.takeCount[strategicTarget] !== 2
+                ) {
+
+                    leftNot2++;
+                }
+
+                ownRank4Total +=
+                    cpuFinalRank4Total(
+                        simulation,
+                        player
+                    );
+
+                for (const other of PLAYERS) {
+
+                    if (other === player) {
+                        continue;
+                    }
+
+                    otherRank4Total +=
+                        cpuFinalRank4Total(
+                            simulation,
+                            other
+                        );
+                }
+
+                totalRuns++;
+            }
+        }
+
+        if (totalRuns === 0) {
+            continue;
+        }
+
+        /*
+         * 比較順序は明確に固定する。
+         *
+         * 1. 自分が最終2 TAKEになる確率
+         * 2. 戦略対象が最終2 TAKEにならない確率
+         * 3. 自分のランク4得点期待値
+         * 4. 他者へ渡るランク4得点の少なさ
+         *
+         * つまりRank4は、2 TAKEの可能性を上回る用途には使わない。
+         */
+
+        const metrics = [
+            exactOwn2 / totalRuns,
+            leftNot2 / totalRuns,
+            ownRank4Total / totalRuns,
+            -otherRank4Total / totalRuns
+        ];
+
+        if (
+            bestMetrics === null ||
+            cpuCompareTuple(
+                metrics,
+                bestMetrics
+            ) > 0
+        ) {
+
+            bestMetrics = metrics;
+            best = candidate;
+        }
+    }
+
+    return best;
+}
+
+/* =========================================================
+   CPUプレイ
+========================================================= */
+
+async function cpuPlay(player) {
+
+    if (
+        game.gameOver ||
+        game.waitingForClick
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        game.currentPlayer !== player
+    ) {
+
+        return;
+
+    }
+
+
+    game.resolving =
+        true;
+
+
+    const card =
+        chooseCPUCard(player);
+
+
+    const index =
+        game.hands[player].findIndex(
+            c =>
+                c.id === card.id
+        );
+
+
+    /*
+     * CPU手札のカードDOMを探す。
+     */
+
+    const hand =
+        document.getElementById(
+            `hand${player}`
+        );
+
+
+    const sourceElement =
+        hand.querySelector(
+            `[data-card-id="${card.id}"]`
+        );
+
+
+    /*
+     * sourceElementが存在しない場合でも
+     * ゲームを止めない。
+     */
+
+    let rect = null;
+
+    if (
+        sourceElement
+    ) {
+
+        rect =
+            sourceElement.getBoundingClientRect();
+
+        sourceElement.style.opacity =
+            "0";
+
+    }
+
+
+    game.hands[player].splice(
+        index,
+        1
+    );
+
+
+    game.currentTrick.push({
+
+        player:
+            player,
+
+        card:
+            card
+
+    });
+
+
+    /*
+     * DOMを更新する前に
+     * 飛行元が必要なので、
+     * CPUカードは専用にアニメーション。
+     */
+
+    if (
+        rect
+    ) {
+
+        await animateCardFromRect(
+            rect,
+            card,
+            player
+        );
+
+    }
+    else {
+
+        showPlayedCard(
+            player,
+            card
+        );
+
+        await sleep(180);
+
+    }
+
+
+    game.resolving =
+        false;
+
+
+    afterCardPlayed();
+
+}
+
+
+/* =========================================================
+   座標からカードを飛ばす
+========================================================= */
+
+function animateCardFromRect(
+    rect,
+    card,
+    player
+) {
+
+    return new Promise(
+        resolve => {
+
+            const flying =
+                createFlyingCard(card);
+
+
+            document.body.appendChild(
+                flying
+            );
+
+
+            const startX =
+                rect.left +
+                rect.width / 2 -
+                27;
+
+
+            const startY =
+                rect.top +
+                rect.height / 2 -
+                27;
+
+
+            flying.style.left =
+                `${startX}px`;
+
+            flying.style.top =
+                `${startY}px`;
+
+
+            const target =
+                getPlayZoneCenter(
+                    player
+                );
+
+
+            requestAnimationFrame(
+                () => {
+
+                    requestAnimationFrame(
+                        () => {
+
+                            flying.style.left =
+                                `${target.x - 27}px`;
+
+                            flying.style.top =
+                                `${target.y - 27}px`;
+
+                            flying.style.transform =
+                                "scale(0.96)";
+
+                        }
+                    );
+
+                }
+            );
+
+
+            setTimeout(
+                () => {
+
+                    flying.remove();
+
+                    showPlayedCard(
+                        player,
+                        card
+                    );
+
+                    resolve();
+
+                },
+                360
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   カードプレイ後
+========================================================= */
+
+function afterCardPlayed() {
+
+    render();
+
+
+    /*
+     * 4枚揃った。
+     */
+
+    if (
+        game.currentTrick.length === 4
+    ) {
+
+        finishTrick();
+
+        return;
+
+    }
+
+
+    /*
+     * 次のプレイヤー。
+     */
+
+    const lastPlayer =
+        game.currentTrick[
+            game.currentTrick.length - 1
+        ].player;
+
+
+    game.currentPlayer =
+        nextPlayer(lastPlayer);
+
+
+    render();
+
+
+    runCurrentPlayer();
+
+}
+
+
+/* =========================================================
+   現在の手番実行
+========================================================= */
+
+function runCurrentPlayer() {
+
+    if (
+        game.gameOver ||
+        game.waitingForClick
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        game.currentPlayer === "A"
+    ) {
+
+        setMessage(
+            "Aの番です。カードを選択してください。"
+        );
+
+        render();
+
+        return;
+
+    }
+
+
+    const player =
+        game.currentPlayer;
+
+
+    setMessage(
+        `${player}がカードを選択しています……`
+    );
+
+
+    game.cpuTimer =
+        setTimeout(
+            () => {
+
+                cpuPlay(
+                    player
+                );
+
+            },
+            420
+        );
+
+}
+
+
+/* =========================================================
+   勝者判定
+========================================================= */
+
+function determineWinner(trick) {
+
+    const leadSuit =
+        trick[0]
+            .card
+            .suit;
+
+
+    const candidates =
+        trick.filter(
+            played =>
+                played.card.suit ===
+                leadSuit
+        );
+
+
+    let winner =
+        candidates[0];
+
+
+    for (
+        const candidate of candidates
+    ) {
+
+        if (
+            candidate.card.rank >
+            winner.card.rank
+        ) {
+
+            winner =
+                candidate;
+
+        }
+
+    }
+
+
+    return winner.player;
+
+}
+
+
+/* =========================================================
+   WIN / TAKE表示
+========================================================= */
+
+function addLabel(
+    player,
+    label
+) {
+
+    const zone =
+        document.getElementById(
+            `playZone${player}`
+        );
+
+
+    const card =
+        zone.querySelector(
+            ".played-card"
+        );
+
+
+    if (
+        !card
+    ) {
+
+        return;
+
+    }
+
+
+    const element =
+        document.createElement(
+            "div"
+        );
+
+
+    element.className =
+        "card-label";
+
+
+    element.textContent =
+        label;
+
+
+    card.appendChild(
+        element
+    );
+
+}
+
+
+/* =========================================================
+   トリック終了
+========================================================= */
+
+function finishTrick() {
+
+    game.resolving =
+        true;
+
+
+    const winner =
+        determineWinner(
+            game.currentTrick
+        );
+
+
+    const collector =
+        takePlayerForWinner(winner, game.trickType);
+
+
+    game.pendingWinner =
+        winner;
+
+    game.pendingCollector =
+        collector;
+
+
+    /*
+     * WIN
+     */
+
+    addLabel(
+        winner,
+        "WIN"
+    );
+
+
+    /*
+     * TAKE
+     */
+
+    addLabel(
+        collector,
+        "TAKE"
+    );
+
+
+    /*
+     * クリック待ち。
+     */
+
+    game.waitingForClick =
+        true;
+
+
+    document
+        .getElementById("table")
+        .classList.add(
+            "waiting"
+        );
+
+
+    setMessage(
+        `${winner} WIN → ${collector} TAKE　｜　画面をクリック`
+    );
+
+
+    const prompt =
+        document.createElement(
+            "div"
+        );
+
+
+    prompt.className =
+        "click-prompt";
+
+    prompt.id =
+        "clickPrompt";
+
+
+    prompt.textContent =
+        "クリックして次へ";
+
+
+    document
+        .getElementById("table")
+        .appendChild(
+            prompt
+        );
+
+
+    render();
+
+}
+
+
+/* =========================================================
+   獲得方向
+========================================================= */
+
+function getTakeDestination(player) {
+
+    const table =
+        document
+            .getElementById("table")
+            .getBoundingClientRect();
+
+
+    /*
+     * 画面外へ飛ばす。
+     */
+
+    const centerX =
+        table.left +
+        table.width / 2;
+
+
+    const centerY =
+        table.top +
+        table.height / 2;
+
+
+    if (
+        player === "A"
+    ) {
+
+        return {
+
+            x:
+                centerX,
+
+            y:
+                window.innerHeight + 100
+
+        };
+
+    }
+
+
+    if (
+        player === "B"
+    ) {
+
+        return {
+
+            x:
+                -100,
+
+            y:
+                centerY
+
+        };
+
+    }
+
+
+    if (
+        player === "C"
+    ) {
+
+        return {
+
+            x:
+                centerX,
+
+            y:
+                -100
+
+        };
+
+    }
+
+
+    return {
+
+        x:
+            window.innerWidth + 100,
+
+        y:
+            centerY
+
+    };
+
+}
+
+
+/* =========================================================
+   4枚を獲得者方向へ飛ばす
+========================================================= */
+
+async function animateTake() {
+
+    const collector =
+        game.pendingCollector;
+
+
+    const destination =
+        getTakeDestination(
+            collector
+        );
+
+
+    const cards = [];
+
+
+    /*
+     * 現在出ている4枚の位置を取得。
+     */
+
+    for (
+        const played of
+        game.currentTrick
+    ) {
+
+        const zone =
+            document.getElementById(
+                `playZone${played.player}`
+            );
+
+
+        const card =
+            zone.querySelector(
+                ".played-card"
+            );
+
+
+        if (
+            !card
+        ) {
+
+            continue;
+
+        }
+
+
+        const rect =
+            card.getBoundingClientRect();
+
+
+        const flight =
+            createTakeCard(
+                played.card
+            );
+
+
+        flight.style.left =
+            `${rect.left}px`;
+
+        flight.style.top =
+            `${rect.top}px`;
+
+
+        document.body.appendChild(
+            flight
+        );
+
+
+        card.style.opacity =
+            "0";
+
+
+        cards.push(
+            flight
+        );
+
+    }
+
+
+    /*
+     * 4枚を少しずらして
+     * まとまり感を出す。
+     */
+
+    cards.forEach(
+        (card, index) => {
+
+            const offset =
+                (index - 1.5) * 4;
+
+
+            requestAnimationFrame(
+                () => {
+
+                    requestAnimationFrame(
+                        () => {
+
+                            card.style.left =
+                                `${destination.x + offset}px`;
+
+                            card.style.top =
+                                `${destination.y + offset}px`;
+
+                            card.style.transform =
+                                "scale(0.7)";
+
+                            card.style.opacity =
+                                "0";
+
+                        }
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+    await sleep(370);
+
+
+    for (
+        const card of cards
+    ) {
+
+        card.remove();
+
+    }
+
+
+}
+
+
+/* =========================================================
+   獲得カードDOM
+========================================================= */
+
+function createTakeCard(card) {
+
+    const element =
+        document.createElement("div");
+
+
+    element.className =
+        `taken-flight ${SUIT_CLASS[card.suit]}`;
+
+    if (card.rank === 4) {
+        element.classList.add("rank4");
+    }
+
+
+    const suit =
+        document.createElement("div");
+
+    suit.className =
+        "taken-suit";
+
+    suit.textContent =
+        SUIT_LABEL[card.suit];
+
+
+    const rank =
+        document.createElement("div");
+
+    rank.className =
+        "taken-rank";
+
+    rank.textContent =
+        card.rank;
+
+
+    element.appendChild(suit);
+    element.appendChild(rank);
+
+
+    return element;
+
+}
+
+
+/* =========================================================
+   クリックで獲得処理
+========================================================= */
+
+async function continueAfterClick() {
+
+    if (
+        !game.waitingForClick
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        game.resolving === false
+    ) {
+
+        return;
+
+    }
+
+
+    game.waitingForClick =
+        false;
+
+
+    document
+        .getElementById("table")
+        .classList.remove(
+            "waiting"
+        );
+
+
+    const prompt =
+        document.getElementById(
+            "clickPrompt"
+        );
+
+
+    if (
+        prompt
+    ) {
+
+        prompt.remove();
+
+    }
+
+
+    const winner =
+        game.pendingWinner;
+
+
+    const collector =
+        game.pendingCollector;
+
+
+    setMessage(
+        `${collector}がトリックを獲得します……`
+    );
+
+
+    /*
+     * 4枚を画面外へ。
+     */
+
+    await animateTake();
+
+
+    /*
+     * 獲得記録。
+     */
+
+    const cards =
+        game.currentTrick.map(
+            played =>
+                played.card
+        );
+
+
+    game.wonTricks[
+        collector
+    ].push(
+        cards
+    );
+
+
+    /*
+     * 履歴。
+     */
+
+    game.history.push(
+        `第${game.currentRound}R・${trickTypeLabel(game.trickType)}・` +
+        `第${game.trickNumber}トリック：` +
+        `${winner} WIN → ` +
+        `${collector} TAKE → ` +
+        `${collector} LEAD`
+    );
+
+
+    /*
+     * 次のリード。
+     */
+
+    game.leader =
+        collector;
+
+    game.currentPlayer =
+        collector;
+
+
+    /*
+     * クリア。
+     */
+
+    game.currentTrick = [];
+    game.pendingWinner = null;
+    game.pendingCollector = null;
+
+    if (game.trickNumber >= 9) {
+
+        for (const player of PLAYERS) {
+            game.roundScores[player][game.currentRound - 1] =
+                baseScore(game.wonTricks[player].length) + countRank4(player);
+        }
+
+        if (game.currentRound >= 3) {
+            game.gameOver = true;
+            game.resolving = false;
+            render();
+            showScorePanel();
+            setMessage("3ラウンド終了。ゲーム終了です。");
+            return;
+        }
+
+        const nextRound = game.currentRound + 1;
+        game.currentRound = nextRound;
+        game.trickType = game.roundTrickTypes[nextRound - 1];
+        game.hands = dealCards();
+        game.wonTricks = { A: [], B: [], C: [], D: [] };
+        game.trickNumber = 1;
+        game.leader = collector;
+        game.currentPlayer = collector;
+        game.currentTrick = [];
+        game.resolving = false;
+
+        clearAllPlayZones();
+        render();
+        setMessage(`第${nextRound}ラウンド：${collector}がリードします。`);
+
+        if (collector !== "A") {
+            runCurrentPlayer();
+        }
+        return;
+    }
+
+    game.trickNumber++;
+    game.resolving = false;
+    clearAllPlayZones();
+    render();
+
+    if (collector === "A") {
+        setMessage(`第${game.trickNumber}トリック：Aがリードします。`);
+        return;
+    }
+
+    runCurrentPlayer();
+}
+
+
+/* =========================================================
+   テーブルクリック
+========================================================= */
+
+document
+    .getElementById("table")
+    .addEventListener(
+        "click",
+        event => {
+
+            if (
+                !game ||
+                !game.waitingForClick
+            ) {
+
+                return;
+
+            }
+
+
+            continueAfterClick();
+
+        }
+    );
+
+
+/* =========================================================
+   スコアパネル
+========================================================= */
+
+function showScorePanel() {
+
+    const panel =
+        document.getElementById(
+            "scorePanel"
+        );
+
+
+    panel.classList.add(
+        "visible"
+    );
+
+
+    const rows =
+        document.getElementById(
+            "scoreRows"
+        );
+
+
+    rows.innerHTML =
+        "";
+
+
+    for (const player of PLAYERS) {
+
+        const row = document.createElement("div");
+        row.className = "score-row";
+
+        const r1 = game.roundScores[player][0];
+        const r2 = game.roundScores[player][1];
+        const r3 = game.roundScores[player][2];
+        const total = r1 + r2 + r3;
+
+        row.innerHTML = `
+            <div>${player}</div>
+            <div>${r1}</div>
+            <div>${r2}</div>
+            <div>${r3}</div>
+            <div>${total}</div>
+        `;
+
+        rows.appendChild(row);
+
+    }
+
+    const history =
+        document.getElementById(
+            "history"
+        );
+
+
+    history.innerHTML =
+        "";
+
+
+    for (
+        const item of
+        game.history
+    ) {
+
+        const line =
+            document.createElement(
+                "div"
+            );
+
+
+        line.className =
+            "history-line";
+
+
+        line.textContent =
+            item;
+
+
+        history.appendChild(
+            line
+        );
+
+    }
+
+}
+
+
+function hideScorePanel() {
+
+    document
+        .getElementById(
+            "scorePanel"
+        )
+        .classList.remove(
+            "visible"
+        );
+
+}
+
+
+/* =========================================================
+   プレイゾーン消去
+========================================================= */
+
+function clearAllPlayZones() {
+
+    for (
+        const player of PLAYERS
+    ) {
+
+        document
+            .getElementById(
+                `playZone${player}`
+            )
+            .innerHTML =
+            "";
+
+    }
+
+}
+
+
+/* =========================================================
+   新しいゲーム
+========================================================= */
+
+document
+    .getElementById("newGame")
+    .addEventListener(
+        "click",
+        () => {
+
+            newGame();
+
+        }
+    );
+
+
+/* =========================================================
+   sleep
+========================================================= */
+
+function sleep(ms) {
+
+    return new Promise(
+        resolve =>
+            setTimeout(
+                resolve,
+                ms
+            )
+    );
+
+}
+
+
+
+
+/* =========================================================
+   ルール説明
+========================================================= */
+
+const ruleModal =
+    document.getElementById("ruleModal");
+
+const ruleHelp =
+    document.getElementById("ruleHelp");
+
+const ruleClose =
+    document.getElementById("ruleClose");
+
+const ruleJa =
+    document.getElementById("ruleJa");
+
+const ruleEn =
+    document.getElementById("ruleEn");
+
+const ruleJaContent =
+    document.getElementById("ruleJaContent");
+
+const ruleEnContent =
+    document.getElementById("ruleEnContent");
+
+function openRuleModal() {
+    ruleModal.classList.add("visible");
+    ruleModal.setAttribute("aria-hidden", "false");
+}
+
+function closeRuleModal() {
+    ruleModal.classList.remove("visible");
+    ruleModal.setAttribute("aria-hidden", "true");
+}
+
+ruleHelp.addEventListener("click", openRuleModal);
+ruleClose.addEventListener("click", closeRuleModal);
+
+ruleModal.addEventListener("click", event => {
+    if (event.target === ruleModal) {
+        closeRuleModal();
+    }
+});
+
+ruleJa.addEventListener("click", () => {
+    ruleJa.classList.add("active");
+    ruleEn.classList.remove("active");
+    ruleJaContent.hidden = false;
+    ruleEnContent.hidden = true;
+});
+
+ruleEn.addEventListener("click", () => {
+    ruleEn.classList.add("active");
+    ruleJa.classList.remove("active");
+    ruleEnContent.hidden = false;
+    ruleJaContent.hidden = true;
+});
+
+document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && ruleModal.classList.contains("visible")) {
+        closeRuleModal();
+    }
+});
+
+
+/* =========================================================
+   起動
+========================================================= */
+
+newGame();
+
+</script>
+
+</body>
+</html>
